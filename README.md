@@ -8,7 +8,7 @@ file: `config.h`
 #define TEST_WS_PORT 8000
 ```
 
-### Maak GEEN gebruik van `delay()`
+### Maak **GEEN** gebruik van `delay()`
 ##### Voorbeeld met `delay()`
 ```c++
 void loop() {
