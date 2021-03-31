@@ -10,14 +10,14 @@ file: `config.h`
 
 ### Maak GEEN gebruik van `delay()`
 ##### Voorbeeld met `delay()`
-```
+```c++
 void loop() {
 	digitalWrite(PIN, !digitalRead(PIN));
 	delay(1000);
 }
 ```
 ##### Voorbeeld zonder `delay()`
-```
+```c++
 long lastBlink = 0;
 long delayTime = 1000;
 
