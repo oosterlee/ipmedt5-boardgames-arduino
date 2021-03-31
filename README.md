@@ -7,3 +7,24 @@ file: `config.h`
 #define TEST_WS_URL "" // IP address of computer here (eg. 192.168.1.123)
 #define TEST_WS_PORT 8000
 ```
+
+### Maak GEEN gebruik van `delay()`
+##### Voorbeeld met `delay()`
+```
+void loop() {
+	digitalWrite(PIN, !digitalRead(PIN));
+	delay(1000);
+}
+```
+##### Voorbeeld zonder `delay()`
+```
+long lastBlink = 0;
+long delayTime = 1000;
+
+void loop() {
+	now = millis();
+	if (now > lastBlink+delayTime) {
+		digitalWrite(PIN, !digitalRead(PIN));
+	}
+}
+```
