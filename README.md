@@ -23,7 +23,7 @@ long delayTime = 1000;
 
 void loop() {
 	now = millis();
-	if (now > lastBlink+delayTime) {
+	if (now >= lastBlink+delayTime) {
 		digitalWrite(PIN, !digitalRead(PIN));
 	}
 }
