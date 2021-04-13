@@ -58,9 +58,13 @@ void SocketIoClient::loop() {
 
 void SocketIoClient::begin(const char* host, int port, const char* url) {
 #ifdef SOCKETIO_SSL
-	webSocket.beginSSL(host + String(url), port);
+	webSocket.beginSSL(host, port, url);
+	Serial.println("beginSSL");
+	Serial.println(host);
+	Serial.println(port);
+	Serial.println(url);
 #else
-	webSocket.begin(host + String(url), port);
+	webSocket.begin(host, port, url);
 #endif
     webSocket.onEvent(std::bind(&SocketIoClient::wsEvent, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
@@ -68,6 +72,9 @@ void SocketIoClient::begin(const char* host, int port, const char* url) {
 void SocketIoClient::begin(const char* host, int port) {
 #ifdef SOCKETIO_SSL
 	webSocket.beginSSL(host, port);
+	Serial.println("beginSSL2");
+	Serial.println(host);
+	Serial.println(port);
 #else
 	webSocket.begin(host, port);
 #endif

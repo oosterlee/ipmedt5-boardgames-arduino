@@ -3,6 +3,7 @@
 
 #include <WebSocketsClient.h>
 #include <map>
+#include "config.h"
 
 class SocketIoClient {
 private:
