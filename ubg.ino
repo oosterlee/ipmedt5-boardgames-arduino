@@ -205,7 +205,7 @@ void setup() {
 		Serial.println(payload);
 	});
 
-
+#if defined(TEST_NO_SIO)
 #if defined(TEST_WS_URL) && defined(TEST_WS_PORT)
 	Serial.println(TEST_WS_URL);
 	Serial.println(TEST_WS_PORT);
@@ -222,6 +222,7 @@ void setup() {
 	Serial.println(WEBSOCKET_URL);
 	Serial.println(WEBSOCKET_PORT);
 	sioc.begin(WEBSOCKET_URL, WEBSOCKET_PORT, String("/socket.io/?email=" + laravelUsername + "&password=" + laravelPassword).c_str());
+#endif
 #endif
 }
 
