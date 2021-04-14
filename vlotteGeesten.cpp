@@ -7,6 +7,14 @@ private:
 	SocketIoClient* socket;
 	Adafruit_NeoPixel* strip;
 	int gameId = -1;
+  const int ledPin = 23; // the number of the neopixel strip
+  const int numLeds = 64;
+  int LDR_VALUE__ONE;
+  int LDR_VALUE__TWO;
+  int LDR_VALUE__THREE;
+  int LDR_VALUE__FOUR;
+  int LDR_VALUE__FIVE;
+  
 public:
 	void setSocket(SocketIoClient* s) {this->socket = s;}
 	void setStrip(Adafruit_NeoPixel* strip) {this->strip = strip;}
@@ -17,6 +25,8 @@ public:
   }
 
     void loop() {
+
+      Serial.println("Hello WOrld");
       LDR_VALUE__ONE = analogRead(25);
       LDR_VALUE__TWO = analogRead(26);
       LDR_VALUE__THREE = analogRead(34);
