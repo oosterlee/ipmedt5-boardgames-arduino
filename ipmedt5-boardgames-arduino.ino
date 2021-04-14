@@ -227,7 +227,9 @@ void setup() {
 }
 
 void loop() {
+	#ifndef TEST_NO_SIO
 	sioc.loop();
+	#endif
 	long now = millis();
 
 	if (now >= lastSetReset+delayReset) {
