@@ -14,6 +14,27 @@ private:
 	int winnerId = -1;
 	bool myTurn = false;
 
+	typedef enum animation_t {
+		ANIMATION_NONE,
+		ANIMATION_PIECE_FALL,
+		ANIMATION_PLAYER_TURN,
+		ANIMATION_PLAYER_WIN,
+	} animation_t;
+
+	bool animationPieceFall = false;
+	bool animationPlayerTurn = false;
+	bool animationPlayerWin = false;
+
+	long lastAnimationPieceFall = 0;
+	long animationPieceFallDelay = 200;
+	int animationPiece = -1;
+
+	long lastAnimationPlayerTurn = 0;
+	long animationPlayerTurnDelay = 1000;
+
+	long lastAnimationPlayerWin = 0;
+	long animationPlayerWinDelay = 1000;
+
 	long lastPrint = 0;
 	long printDelay = 1000;
 
@@ -88,13 +109,15 @@ public:
 		socket->on("turn", [&](const char* payload, size_t len) {
 			Serial.println("TURN EVENT");
 			Serial.println(payload);
-			DynamicJsonDocument doc(len*2);
+			DynamicJsonDocument doc(len*4);
 			auto error = deserializeJson(doc, payload);
 			if (error) {
 			    Serial.print(F("deserializeJson() failed with code "));
 			    Serial.println(error.c_str());
 			    return;
 			}
+
+			animationPlayerTurn = true;
 
 			int turn = doc["turn"].as<int>();
 			if (turn != user_id) myTurn = false;
@@ -147,15 +170,17 @@ public:
 		Serial.println(col);
 		Serial.println(player);
 		if (winner && player == -1) return;
+		animationPieceFall = true;
 		if (player == -1) {
 			myTurn = false;
-			socket->emit("fiar_place", String("{ \"column\": " + String(col) + ", \"game\": \"vieropeenrij\", \"id\" \"" + gameId + "\" }").c_str());
+			socket->emit("fiar_place", String("{ \"column\": " + String(col) + ", \"game\": \"vieropeenrij\", \"id\": \"" + gameId + "\" }").c_str());
 		}
 
 		uint8_t lic = getLastInColumn(col);
 		if (lic == -1) return;
 
 		board[lic][col] = player == -1 ? user_id : player;
+		animationPiece = lic;
 		renderBoard();
 	}
 
@@ -168,6 +193,9 @@ public:
 	}
 
 	void resetBoard() {
+		animationPieceFall = false;
+		animationPlayerTurn = false;
+		animationPlayerWin = false;
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				board[i][j] = -1;
@@ -190,22 +218,34 @@ public:
 			place(0, -1);
 		} else if (touchReadAvg(T2) < 25) {
 			place(1, -1);
-		} else if (touchReadAvg(T2) < 25) {
-			place(2, -1);
 		} else if (touchReadAvg(T3) < 25) {
-			place(3, -1);
+			place(2, -1);
 		} else if (touchReadAvg(T4) < 25) {
-			place(4, -1);
+			place(3, -1);
 		} else if (touchReadAvg(T5) < 25) {
-			place(5, -1);
+			place(4, -1);
 		} else if (touchReadAvg(T6) < 25) {
-			place(6, -1);
+			place(5, -1);
 		} else if (touchReadAvg(T7) < 25) {
-			place(7, -1);
+			place(6, -1);
 		} else if (touchReadAvg(T9) < 25) {
-			place(8, -1);
+			place(7, -1);
 		}
 	}
+
+	// void animate(animation_t animation) {
+	// 	if (animation == ANIMATION_NONE) return;
+	// 	if (oldAnimation != animation) {
+	// 		animationStep = 0;
+	// 		lastAnimation = 0;
+	// 	}
+	// 	else animationStep++;
+
+	// 	long now = millis();
+	// 	if (now >= lastAnimation+animationDelays[animation]) {
+	// 		Serial.println("Animation!");
+	// 	}
+	// }
 
 	void loop() {
 		long now = millis();
@@ -225,14 +265,31 @@ public:
 		// 	Serial.printf("T8=%d\n", touchReadAvg(T8));
 		// 	Serial.printf("T9=%d\n", touchReadAvg(T9));
 		// }
+
+		if (now >= lastAnimationPieceFall+animationPieceFallDelay && animationPieceFall == true) {
+			lastAnimationPieceFall = now;
+			Serial.println("animation fall");
+			animationPieceFall = false;
+		}
+
+		if (now >= lastAnimationPlayerTurn+animationPlayerTurnDelay) {
+			lastAnimationPlayerTurn = now;
+			Serial.println("animation playerturn");
+		}
+
+		if (now >= lastAnimationPlayerWin+animationPlayerWinDelay) {
+			lastAnimationPlayerWin = now;
+			Serial.println("animation playerwin");
+		}
+
+		// long lastAnimationPieceFall = 0;
+		// long animationPieceFallDelay = 200;
+		// long animationPieceFallDone = false;
+
+		// long lastAnimationPlayerTurn = 0;
+		// long animationPlayerTurnDelay = 200;
+
+		// long lastAnimationPlayerWin = 0;
+		// long animationPlayerWinDelay = 200;
 	}
 };
-
-// 4
-// 2
-// 15
-// 13
-// 12
-// 14
-// 27
-// 33

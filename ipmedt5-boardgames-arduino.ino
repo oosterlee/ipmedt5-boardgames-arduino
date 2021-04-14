@@ -205,7 +205,7 @@ void setup() {
 		Serial.println(payload);
 	});
 
-#if defined(TEST_NO_SIO)
+#ifndef TEST_NO_SIO
 #if defined(TEST_WS_URL) && defined(TEST_WS_PORT)
 	Serial.println(TEST_WS_URL);
 	Serial.println(TEST_WS_PORT);
