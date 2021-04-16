@@ -51,37 +51,9 @@ public:
 		Serial.println("Trivial pursuit!!");
 		strip->begin();
 		strip->setBrightness(240); // 1/3 brightness
+
     socket->on("tp_getUsers", [&](const char* payload, size_t len) {
-      DynamicJsonDocument doc(len * 2);
-      auto error = deserializeJson(doc, payload);
-      if (error) {
-        Serial.print(F("deserializeJson() failed with code "));
-        Serial.println(error.c_str());
-        return;
-      }
-      user_id = doc["user_id"].as<int>();
-      Serial.println("user_id");
-      Serial.println(user_id);
-    });
-    socket->emit("tp_getUsers", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
-
-    socket->on("tp_getPlaats", [&](const char* payload, size_t len) {
-      DynamicJsonDocument doc(len * 2);
-      auto error = deserializeJson(doc, payload);
-      if (error) {
-        Serial.print(F("deserializeJson() failed with code "));
-        Serial.println(error.c_str());
-        return;
-      }
-      plek = doc["plek"].as<int>();
-      Serial.println("plek");
-      Serial.println(plek);
-    });
-    socket->emit("tp_getPlaats", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
-    
-
-    socket->on("getUsers", [&](const char* payload, size_t len) {
-      Serial.println("GETUSERS");
+      Serial.println("__GETUSERS__");
       Serial.println(payload);
       DynamicJsonDocument doc(512);
       auto error = deserializeJson(doc, payload);
@@ -105,9 +77,11 @@ public:
         Serial.println(players[i]);
       }
       });
-    socket->emit("getUsers", String("{ \"game\": \"ganzenbord\", \"id\": " + String(gameId) + " }").c_str());
+    socket->emit("tp_getUsers", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
 
-    socket->on("tp_state", [&](const char* payload, size_t len) {
+    socket->on("tp_getPlaats", [&](const char* payload, size_t len) {
+      Serial.println("__GETPLAATS__");
+      Serial.println(payload);
       DynamicJsonDocument doc(512);
       auto error = deserializeJson(doc, payload);
       if (error) {
@@ -115,32 +89,46 @@ public:
         Serial.println(error.c_str());
         return;
       }
+      plek = doc["plek"].as<int>();
+      Serial.println("__PLEK__");
+      Serial.println(plek);
+    });
+    socket->emit("tp_getPlaats", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
 
-      Serial.println("TP STATE!");
-      Serial.println(payload);
-      for (int i = 0; i < playerSize; ++i) {
-        uint8_t pos = doc["playerPositions"][String(players[i])].as<uint8_t>();
-        Serial.println(playerPositions[i][0]);
-        Serial.println(players[i]);
-        Serial.println(pos);
-        Serial.println(playerPositions[i][1]);
-        if (playerPositions[i][0] == players[i]) {
-          playerPositions[i][1] = pos;
-        }
-      }
-
-      });
-    socket->emit("tp_state", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
+//    socket->on("tp_state", [&](const char* payload, size_t len) {
+//      DynamicJsonDocument doc(512);
+//      auto error = deserializeJson(doc, payload);
+//      if (error) {
+//        Serial.print(F("deserializeJson() failed with code "));
+//        Serial.println(error.c_str());
+//        return;
+//      }
+//
+//      Serial.println("TP STATE!");
+//      Serial.println(payload);
+//      for (int i = 0; i < playerSize; ++i) {
+//        uint8_t pos = doc["playerPositions"][String(players[i])].as<uint8_t>();
+//        Serial.println(playerPositions[i][0]);
+//        Serial.println(players[i]);
+//        Serial.println(pos);
+//        Serial.println(playerPositions[i][1]);
+//        if (playerPositions[i][0] == players[i]) {
+//          playerPositions[i][1] = pos;
+//        }
+//      }
+//
+//      });
+//    socket->emit("tp_state", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
 	}
 
-  void lopentwo(int player, uint8_t position) {
-    for (int i = 0; i < playerSize; ++i) {
-      if (playerPositions[i][0] == player) {
-        playerPositions[i][1] = position;
-      }
-    }
-    renderPlayers();
-  }
+//  void lopentwo(int player, uint8_t position) {
+//    for (int i = 0; i < playerSize; ++i) {
+//      if (playerPositions[i][0] == player) {
+//        playerPositions[i][1] = position;
+//      }
+//    }
+//    renderPlayers();
+//  }
 
   void renderPlayers() {
     Serial.println("RENDERPLAYERS");
@@ -182,6 +170,5 @@ public:
 
 	void loop() {
   strip->show();
-  delay(1000);
 	}
 };
