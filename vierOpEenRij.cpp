@@ -25,15 +25,24 @@ private:
 	bool animationPlayerTurn = false;
 	bool animationPlayerWin = false;
 
+	bool animationPieceFallDone = true;
 	long lastAnimationPieceFall = 0;
 	long animationPieceFallDelay = 200;
-	int animationPiece = -1;
+	int animationPieceFallStep = 0;
+	int animationPieceRow = -1;
+	int animationPiecePlayer = -1;
+	uint8_t animationPieceCol = 0;
+
+	int winningPiecesVertical[2][2] = { {-1, -1}, {-1, -1} };
+	int winningPiecesHorizontal[2][2] = { {-1, -1}, {-1, -1} };
 
 	long lastAnimationPlayerTurn = 0;
 	long animationPlayerTurnDelay = 1000;
+	bool animationPlayerTurnState = false;
 
 	long lastAnimationPlayerWin = 0;
-	long animationPlayerWinDelay = 1000;
+	long animationPlayerWinDelay = 250;
+	bool animationPlayerWinState = false;
 
 	long lastPrint = 0;
 	long printDelay = 1000;
@@ -56,6 +65,8 @@ public:
 	void setup() {
 		Serial.println("[SETUP] Vier op een rij!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		resetBoard();
+
+		strip->setBrightness(96);
 
 		socket->on("user_id", [&](const char* payload, size_t len) {
 			DynamicJsonDocument doc(len*2);
@@ -123,6 +134,62 @@ public:
 			if (turn != user_id) myTurn = false;
 			else myTurn = true;
 		});
+
+		socket->on("fiar_winner", [&](const char* payload, size_t len) {
+			Serial.println("FIAR WINNER!");
+			DynamicJsonDocument doc(1024);
+			auto error = deserializeJson(doc, payload);
+			if (error) {
+			    Serial.print(F("deserializeJson() failed with code "));
+			    Serial.println(error.c_str());
+			    return;
+			}
+
+			Serial.println(payload);
+
+			JsonObject vertical = doc["winningPieces"]["vertical"];
+			JsonObject horizontal = doc["winningPieces"]["horizontal"];
+
+			if (!vertical.isNull()) {
+				Serial.println("VERTICAL");
+				JsonArray verticalArrB = vertical["begin"].as<JsonArray>();
+				winningPiecesVertical[0][0] = verticalArrB[0].as<int>();
+				winningPiecesVertical[0][1] = verticalArrB[1].as<int>();
+
+				JsonArray verticalArrE = vertical["end"].as<JsonArray>();
+				winningPiecesVertical[1][0] = verticalArrE[0].as<int>();
+				winningPiecesVertical[1][1] = verticalArrE[1].as<int>();
+
+				Serial.println(verticalArrB[0].as<int>());
+				Serial.println(verticalArrB[1].as<int>());
+				Serial.println(verticalArrE[0].as<int>());
+				Serial.println(verticalArrE[1].as<int>());
+
+				winner = true;
+				animationPlayerWin = true;
+				animationPlayerTurn = false;
+			}
+			if (!horizontal.isNull()) {
+				Serial.println("HORIZONTAL");
+				JsonArray horizontalArrB = horizontal["begin"].as<JsonArray>();
+				winningPiecesHorizontal[0][0] = horizontalArrB[0].as<int>();
+				winningPiecesHorizontal[0][1] = horizontalArrB[1].as<int>();
+
+				JsonArray horizontalArrE = horizontal["end"].as<JsonArray>();
+				winningPiecesHorizontal[1][0] = horizontalArrE[0].as<int>();
+				winningPiecesHorizontal[1][1] = horizontalArrE[1].as<int>();
+
+				Serial.println(horizontalArrB[0].as<int>());
+				Serial.println(horizontalArrB[1].as<int>());
+				Serial.println(horizontalArrE[0].as<int>());
+				Serial.println(horizontalArrE[1].as<int>());
+				winner = true;
+				animationPlayerWin = true;
+				animationPlayerTurn = false;
+			}
+			// winningPiecesVertical
+			// winningPiecesHorizontal
+		});
 		// socket->on("message", [](const char* payload, size_t len) {
 		// 	Serial.println("VoeR msg");
 		// 	Serial.println(payload);
@@ -144,9 +211,10 @@ public:
 		for (int r = 0; r < 8; r++) {
 			for (int c = 0; c < 8; c++) {
 				if (board[r][c] == -1) continue;
-				Serial.printf("c=%d, r=%d, board=%d, user=%d", c, r, board[r][c], user_id);
+				// Serial.printf("c=%d, r=%d, board=%d, user=%d", c, r, board[r][c], user_id);
 				if (board[r][c] == user_id) colrowSetPixel(c, r, 0, 0, 255);
 				else colrowSetPixel(c, r, 255, 0, 0);
+				// Serial.printf("c=%d, r=%d, user=%d\n", c, r, board[r][c]);
 			}
 		}
 		strip->show();
@@ -170,17 +238,24 @@ public:
 		Serial.println(col);
 		Serial.println(player);
 		if (winner && player == -1) return;
-		animationPieceFall = true;
 		if (player == -1) {
 			myTurn = false;
 			socket->emit("fiar_place", String("{ \"column\": " + String(col) + ", \"game\": \"vieropeenrij\", \"id\": \"" + gameId + "\" }").c_str());
 		}
 
+		if (animationPieceFallDone == false) {
+			board[animationPieceRow][animationPieceCol] = animationPiecePlayer;
+		}
 		uint8_t lic = getLastInColumn(col);
 		if (lic == -1) return;
 
-		board[lic][col] = player == -1 ? user_id : player;
-		animationPiece = lic;
+		// board[lic][col] = player == -1 ? user_id : player;
+		animationPiecePlayer = player == -1 ? user_id : player;
+		animationPieceRow = lic;
+		animationPieceFall = true;
+		animationPieceFallStep = 0;
+		animationPieceCol = col;
+		animationPieceFallDone = false;
 		renderBoard();
 	}
 
@@ -247,6 +322,89 @@ public:
 	// 	}
 	// }
 
+	void animationPieceFallFunc(long now) {
+		if (animationPieceRow == -1) return;
+		lastAnimationPieceFall = now;
+		Serial.println("animation fall");
+		if (animationPieceFallStep >= animationPieceRow) {
+			animationPieceFallDone = true;
+			animationPieceFall = false;
+			// Serial.println("Doneeee");
+			Serial.printf("ac=%d, ar=%d\n", animationPieceCol, animationPieceRow);
+			// Serial.println(animationPiecePlayer);
+			board[animationPieceRow][animationPieceCol] = animationPiecePlayer;
+			renderBoard();
+		} else {
+			if (animationPieceFallStep > 0) {
+				colrowSetPixel(animationPieceCol, animationPieceFallStep-1, 0, 0, 0);
+			}
+			if (user_id == animationPiecePlayer) colrowSetPixel(animationPieceCol, animationPieceFallStep, 0, 0, 255);
+			else colrowSetPixel(animationPieceCol, animationPieceFallStep, 255, 0, 0);
+			strip->show();
+			animationPieceFallStep++;
+			// Serial.println(animationPieceFallStep++);
+			Serial.printf("c=%d, r=%d\n", animationPieceCol, animationPieceFallStep);
+		}
+	}
+
+	void animationPlayerTurnFunc(long now) {
+		Serial.println("animationPlayerTurnFunc");
+		lastAnimationPlayerTurn = now;
+		for (int r = 0; r < 8; r++) {
+			for (int c = 0; c < 8; c++) {
+				if (board[r][c] == -1) continue;
+				// Serial.printf("c=%d, r=%d, board=%d, user=%d", c, r, board[r][c], user_id);
+				if (myTurn && board[r][c] == user_id) colrowSetPixel(c, r, 0, 0, animationPlayerTurnState ? 255 : 96);
+				else if(!myTurn && board[r][c] != user_id) colrowSetPixel(c, r, animationPlayerTurnState ? 255 : 96, 0, 0);
+				// Serial.printf("c=%d, r=%d, user=%d\n", c, r, board[r][c]);
+			}
+		}
+		animationPlayerTurnState = !animationPlayerTurnState;
+		strip->show();
+	}
+
+	void animationPlayerWinFunc(long now) {
+		lastAnimationPlayerWin = now;
+
+			Serial.println("ANIMATIONPLAYERWINFUNC");
+		if (winningPiecesVertical[0][0] != -1) {
+			for (int i = winningPiecesVertical[1][1]; i < winningPiecesVertical[0][1]+1; i++) {
+				if (board[i][winningPiecesVertical[0][0]] == user_id) colrowSetPixel(winningPiecesVertical[0][0], i, 0, 0, animationPlayerWinState ? 255 : 96);
+				else if (board[i][winningPiecesVertical[0][0]] != -1) colrowSetPixel(winningPiecesVertical[0][0], i, animationPlayerWinState ? 255 : 96, 0, 0);
+			}
+		}
+
+		Serial.printf("bc=%d, ec=%d, br=%d, er=%d\n",
+			winningPiecesHorizontal[0][0],
+			winningPiecesHorizontal[1][0],
+			winningPiecesHorizontal[0][1],
+			winningPiecesHorizontal[1][1]);
+
+		if (winningPiecesHorizontal[0][0] != -1) {
+			for (int i = winningPiecesHorizontal[0][0]; i < winningPiecesHorizontal[1][0]+1; i++) {
+				if (board[winningPiecesHorizontal[0][1]][i] == user_id) colrowSetPixel(i, winningPiecesHorizontal[0][1], 0, 0, animationPlayerWinState ? 255 : 96);
+				else if (board[winningPiecesHorizontal[0][1]][i] != -1) colrowSetPixel(i, winningPiecesHorizontal[0][1], animationPlayerWinState ? 255 : 96, 0, 0);
+			}
+		}
+
+
+		// for (let i = winningPieces.horizontal.begin[0]; i < winningPieces.horizontal.end[0]+1; i++) {
+		// 		const piece = getPiecePlace(i, winningPieces.horizontal.begin[1]);
+		// 		if (!piece && timeout == true) {
+		// 			timeout = false;
+		// 			return setTimeout(winnerText, 25);
+		// 		}
+		// 		console.log(piece, i, winningPieces.horizontal.begin[1]);
+		// 		piece.classList.add("js--piece-win");
+		// 		console.log("WIN", i);
+		// 	}
+		strip->show();
+
+		animationPlayerWinState = !animationPlayerWinState;
+
+
+	}
+
 	void loop() {
 		long now = millis();
 
@@ -266,20 +424,18 @@ public:
 		// 	Serial.printf("T9=%d\n", touchReadAvg(T9));
 		// }
 
-		if (now >= lastAnimationPieceFall+animationPieceFallDelay && animationPieceFall == true) {
-			lastAnimationPieceFall = now;
-			Serial.println("animation fall");
-			animationPieceFall = false;
+		if (now >= lastAnimationPieceFall+animationPieceFallDelay && (animationPieceFall == true || animationPieceFallDone == false)) {
+			animationPieceFallFunc(now);
 		}
 
-		if (now >= lastAnimationPlayerTurn+animationPlayerTurnDelay) {
-			lastAnimationPlayerTurn = now;
-			Serial.println("animation playerturn");
+		if (now >= lastAnimationPlayerTurn+animationPlayerTurnDelay && animationPlayerTurn == true) {
+			animationPlayerTurnFunc(now);
+			// Serial.println("animation playerturn");
 		}
 
-		if (now >= lastAnimationPlayerWin+animationPlayerWinDelay) {
-			lastAnimationPlayerWin = now;
-			Serial.println("animation playerwin");
+		if (now >= lastAnimationPlayerWin+animationPlayerWinDelay && animationPlayerWin == true) {
+			animationPlayerWinFunc(now);
+			// Serial.println("animation playerwin");
 		}
 
 		// long lastAnimationPieceFall = 0;
