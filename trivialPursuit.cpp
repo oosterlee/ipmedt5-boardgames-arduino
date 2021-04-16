@@ -15,6 +15,10 @@ private:
   uint8_t playerSize = 0;
   int playerPositions[4][2];
   int plek;
+  int old_1 = 0;
+  int old_2 = 0;
+  int old_3 = 0;
+  int old_4 = 0;
 
   
   std::map<String, int> steps = {
@@ -89,9 +93,46 @@ public:
         Serial.println(error.c_str());
         return;
       }
-      plek = doc["plek"].as<int>();
-      Serial.println("__PLEK__");
-      Serial.println(plek);
+      for (int i = 0; i < playerSize; ++i) {
+        if(players[i] == "id"){
+          setStep(doc[players[i].as<int>(), doc["id"]["plek"].as<int>());
+        }
+        }
+      }
+      
+      void setStep(int id, int plek) {
+        if (id == 0){
+          strip->setPixelColor(plek, 50, 0, 0);
+          strip->setPixelColor(old_1, 0, 0, 0);
+          
+          old_1 = plek;
+          strip->show();
+        }
+
+        else if (id == 1){
+          strip->setPixelColor(plek, 0, 50, 0);
+          strip->setPixelColor(old_2, 0, 0, 0);
+
+          old_2 = plek;
+          strip->show();
+        }
+
+
+        else if (id == 2){
+          strip->setPixelColor(plek, 0, 0, 50);
+          strip->setPixelColor(old_3, 0, 0, 0);
+
+          old_3 = plek;
+          strip->show();
+        }
+
+        else if (id == 3){
+          strip->setPixelColor(plek, 50, 50, 0);
+          strip->setPixelColor(old_4, 0, 0, 0);
+          
+          old_4 = plek;
+          strip->show();
+        }
     });
     socket->emit("tp_getPlaats", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
 
