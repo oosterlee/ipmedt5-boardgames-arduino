@@ -14,6 +14,7 @@ private:
   int players [4] = {0, 0, 0, 0};
   uint8_t playerSize = 0;
   int playerPositions[4][2];
+  int plek;
 
   
   std::map<String, int> steps = {
@@ -63,6 +64,21 @@ public:
       Serial.println(user_id);
     });
     socket->emit("tp_getUsers", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
+
+    socket->on("tp_getPlaats", [&](const char* payload, size_t len) {
+      DynamicJsonDocument doc(len * 2);
+      auto error = deserializeJson(doc, payload);
+      if (error) {
+        Serial.print(F("deserializeJson() failed with code "));
+        Serial.println(error.c_str());
+        return;
+      }
+      plek = doc["plek"].as<int>();
+      Serial.println("plek");
+      Serial.println(plek);
+    });
+    socket->emit("tp_getPlaats", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
+    
 
     socket->on("getUsers", [&](const char* payload, size_t len) {
       Serial.println("GETUSERS");
