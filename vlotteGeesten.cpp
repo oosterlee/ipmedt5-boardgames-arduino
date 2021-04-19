@@ -59,9 +59,7 @@ public:
       LDR_VALUE__FIVE = analogReadAvg(39);
 
       if(LDR_VALUE__ONE < 500){
-//        socket->emit("fiar_place", String("{ \"column\": " + String(col) + ", \"game\": \"vieropeenrij\", \"id\": \"" + gameId + "\" }")
-        socket->emit("objecten", String("{ \"object\": \"spook\" + ", "\"game\": \"vlottegeest\", \"id\": \"" + String(gameId) + "\"rondeNummer\": \"rondeNummer\ + \" }").c_str());
-//        socket->emit('objecten', { object: "spook",game: "vlottegeest", id: gameId, rondeNummer: rondeNummer });
+        socket->emit("objecten", String("{ \"object\": \"spook\", \"game\": \"vlottegeest\", \"id\": " + String(gameId) + ", \"rondeNummer\": " + String(rondeNummer) + " }").c_str());
         strip->setPixelColor(19, 0, 0, 255);
       
       }else{
@@ -70,8 +68,7 @@ public:
       
 
       if(LDR_VALUE__TWO < 500){
-        socket->emit("objecten", String("{ \"object\": \"bad\" + ", "\"game\": \"vlottegeest\", \"id\": \"" + String(gameId)+ "\"rondeNummer\": \"rondeNummer\"" }").c_str());
-//        socket->emit('objecten', { object: "bad",game: "vlottegeest", id: gameId, rondeNummer: rondeNummer });
+        socket->emit("objecten", String("{ \"object\": \"bad\", \"game\": \"vlottegeest\", \"id\": " + String(gameId) + ", \"rondeNummer\": " + String(rondeNummer) + " }").c_str());
         strip->setPixelColor(26, 255, 0,0);
       
       }else{
@@ -79,8 +76,7 @@ public:
       }
 
       if(LDR_VALUE__THREE < 500){
-        socket->emit("objecten", String("{ \"object\": \"frogie\" + ", "\"game\": \"vlottegeest\", \"id\": \"" + String(gameId) + "\"rondeNummer\": \"rondeNummer\"" }").c_str());
-//        socket->emit('objecten', { object: "frogie",game: "vlottegeest", id: gameId, rondeNummer: rondeNummer });
+        socket->emit("objecten", String("{ \"object\": \"frogie\", \"game\": \"vlottegeest\", \"id\": " + String(gameId) + ", \"rondeNummer\": " + String(rondeNummer) + " }").c_str());
         strip->setPixelColor(33, 0, 128, 0);
       
       }else{
@@ -88,8 +84,7 @@ public:
       }
 
       if(LDR_VALUE__FOUR < 500){
-        socket->emit("objecten", String("{ \"object\": \"dokie\" + ", "\"game\": \"vlottegeest\", \"id\": \"" + String(gameId) + "\"rondeNummer\": \"rondeNummer\"" }").c_str());
-//        socket->emit('objecten', { object: "doekie",game: "vlottegeest", id: gameId, rondeNummer: rondeNummer });
+        socket->emit("objecten", String("{ \"object\": \"dokie\", \"game\": \"vlottegeest\", \"id\": " + String(gameId) + ", \"rondeNummer\": " + String(rondeNummer) + " }").c_str());
         strip->setPixelColor(42, 138, 186,211);
       
       }else{
@@ -97,8 +92,7 @@ public:
       }
 
       if(LDR_VALUE__FIVE < 500){
-        socket->emit("objecten", String("{ \"object\": \"borstel\" + ", "\"game\": \"vlottegeest\", \"id\": \"" + String(gameId) + "\"rondeNummer\": \"rondeNummer\"" }").c_str());
-//        socket->emit('objecten', { object: "borstel", game: "vlottegeest", id: gameId, rondeNummer: rondeNummer });
+        socket->emit("objecten", String("{ \"object\": \"borstel\", \"game\": \"vlottegeest\", \"id\": " + String(gameId) + ", \"rondeNummer\": " + String(rondeNummer) + " }").c_str());
         strip->setPixelColor(51, 255, 255,255);
       
       }else{
