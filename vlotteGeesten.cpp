@@ -52,8 +52,8 @@ public:
     void loop() {
       Serial.println(LDR_VALUE__ONE);
       
-      LDR_VALUE__ONE = analogReadAvg(25);
-      LDR_VALUE__TWO = analogReadAvg(26);
+      LDR_VALUE__ONE = analogReadAvg(26);
+      LDR_VALUE__TWO = analogReadAvg(25);
       LDR_VALUE__THREE = analogReadAvg(34);
       LDR_VALUE__FOUR = analogReadAvg(35);
       LDR_VALUE__FIVE = analogReadAvg(39);
@@ -61,7 +61,7 @@ public:
       if(LDR_VALUE__ONE < 500){
         socket->emit("objecten", String("{ \"object\": \"spook\", \"game\": \"vlottegeest\", \"id\": " + String(gameId) + ", \"rondeNummer\": " + String(rondeNummer) + " }").c_str());
         strip->setPixelColor(19, 0, 0, 255);
-      
+        Serial.print(LDR_VALUE__ONE);
       }else{
         strip->setPixelColor(19, 0, 0,0);
       }
