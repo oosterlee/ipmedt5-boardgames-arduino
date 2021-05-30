@@ -67,8 +67,8 @@ public:
       }
       
       for (int i = 0; i < playerSize; ++i) {
-        if(players[i] == "id"){
-          returb "id".as<int>());
+        if(players[i][0] == "id"){
+          return "id".as<int>());
         }
       }
       
@@ -104,11 +104,10 @@ public:
         return;
       }
       for (int i = 0; i < playerSize; ++i) {
-        if(players[i] == "id"){
+        if(players[i][0] == "id"){
           setStep(doc[players[i].as<int>(), doc["id"]["plek"].as<int>());
         }
       }
-      socket->emit("tp_turnCard", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
     }
       
       void setStep(int id, int plek) {
@@ -186,6 +185,9 @@ public:
   }
 
 	void loop() {
+  if(touchRead(TOUCH_PIN < 25)){
+    socket->emit("tp_turnCard", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
+  }
   strip->show();
 	}
 }
