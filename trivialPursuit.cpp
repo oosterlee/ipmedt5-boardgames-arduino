@@ -4,7 +4,6 @@
 #include "ArduinoJson.h" 
 #include <map>
 
-
 class TrivialPursuit {
 private:
 	SocketIoClient* socket;
@@ -19,6 +18,8 @@ private:
   int old_2 = 0;
   int old_3 = 0;
   int old_4 = 0;
+  const int TOUCH_PIN = 15;
+
 
   
   std::map<String, int> steps = {
@@ -52,9 +53,26 @@ public:
 	void setGameId(int gameId) {if (this->gameId != gameId) this->gameId = gameId;}
 
 	void setup() {
-		Serial.println("Trivial pursuit!!");
 		strip->begin();
 		strip->setBrightness(240); // 1/3 brightness
+
+    socket->on("tp_turnCard", [&](const char* payload, size_t len){
+      Serial.println(payload);
+      DynamicJsonDocument doc(512);
+      auto error = deserializeJson(doc, payload);
+      if (error) {
+        Serial.print(F("deserializeJson() failed with code "));
+        Serial.println(error.c_str());
+        return;
+      }
+      
+      for (int i = 0; i < playerSize; ++i) {
+        if(players[i] == "id"){
+          returb "id".as<int>());
+        }
+      }
+      
+    }
 
     socket->on("tp_getUsers", [&](const char* payload, size_t len) {
       Serial.println("__GETUSERS__");
@@ -76,29 +94,22 @@ public:
         playerPositions[playerSize][1] = 0;
         players[playerSize++] = playerId;
       }
-
-      for (int i = 0; i < playerSize; ++i) {
-        Serial.println(players[i]);
-      }
       });
     socket->emit("tp_getUsers", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
 
     socket->on("tp_getPlaats", [&](const char* payload, size_t len) {
-      Serial.println("__GETPLAATS__");
-      Serial.println(payload);
       DynamicJsonDocument doc(512);
       auto error = deserializeJson(doc, payload);
       if (error) {
-        Serial.print(F("deserializeJson() failed with code "));
-        Serial.println(error.c_str());
         return;
       }
       for (int i = 0; i < playerSize; ++i) {
         if(players[i] == "id"){
           setStep(doc[players[i].as<int>(), doc["id"]["plek"].as<int>());
         }
-        }
       }
+      socket->emit("tp_turnCard", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
+    }
       
       void setStep(int id, int plek) {
         if (id == 0){
@@ -135,41 +146,6 @@ public:
         }
     });
     socket->emit("tp_getPlaats", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
-
-//    socket->on("tp_state", [&](const char* payload, size_t len) {
-//      DynamicJsonDocument doc(512);
-//      auto error = deserializeJson(doc, payload);
-//      if (error) {
-//        Serial.print(F("deserializeJson() failed with code "));
-//        Serial.println(error.c_str());
-//        return;
-//      }
-//
-//      Serial.println("TP STATE!");
-//      Serial.println(payload);
-//      for (int i = 0; i < playerSize; ++i) {
-//        uint8_t pos = doc["playerPositions"][String(players[i])].as<uint8_t>();
-//        Serial.println(playerPositions[i][0]);
-//        Serial.println(players[i]);
-//        Serial.println(pos);
-//        Serial.println(playerPositions[i][1]);
-//        if (playerPositions[i][0] == players[i]) {
-//          playerPositions[i][1] = pos;
-//        }
-//      }
-//
-//      });
-//    socket->emit("tp_state", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
-	}
-
-//  void lopentwo(int player, uint8_t position) {
-//    for (int i = 0; i < playerSize; ++i) {
-//      if (playerPositions[i][0] == player) {
-//        playerPositions[i][1] = position;
-//      }
-//    }
-//    renderPlayers();
-//  }
 
   void renderPlayers() {
     Serial.println("RENDERPLAYERS");
@@ -212,4 +188,5 @@ public:
 	void loop() {
   strip->show();
 	}
+}
 };
