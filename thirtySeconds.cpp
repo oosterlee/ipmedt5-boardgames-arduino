@@ -96,7 +96,24 @@ public:
     }
   }
 
-  void loop() {
+  int touchReadAvg(int pin) {
+    long value = 0;
 
+    for (int i = 0; i < 10; i++) {
+      value += touchRead(pin);
+    }
+
+    return value / 10;
+  }
+
+  void processInputs() {
+    if (touchReadAvg(T8) < 25) {
+      socket->emit("ts_turncard", String("{ \"game\": \"thirtyseconds\", \"id\": " + String(gameId) + " }").c_str());
+      Serial.println("Touch pin");
+    }
+  }
+
+  void loop() {
+    processInputs();
   }
 };
