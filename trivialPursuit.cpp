@@ -4,7 +4,6 @@
 #include "ArduinoJson.h" 
 #include <map>
 
-
 class TrivialPursuit {
 private:
 	SocketIoClient* socket;
@@ -14,6 +13,13 @@ private:
   int players [4] = {0, 0, 0, 0};
   uint8_t playerSize = 0;
   int playerPositions[4][2];
+  int plek;
+  int old_1 = 0;
+  int old_2 = 0;
+  int old_3 = 0;
+  int old_4 = 0;
+  const int TOUCH_PIN = 15;
+
 
   
   std::map<String, int> steps = {
@@ -47,25 +53,29 @@ public:
 	void setGameId(int gameId) {if (this->gameId != gameId) this->gameId = gameId;}
 
 	void setup() {
-		Serial.println("Trivial pursuit!!");
 		strip->begin();
 		strip->setBrightness(240); // 1/3 brightness
-    socket->on("tp_getUsers", [&](const char* payload, size_t len) {
-      DynamicJsonDocument doc(len * 2);
+
+    socket->on("tp_turnCard", [&](const char* payload, size_t len){
+      Serial.println(payload);
+      DynamicJsonDocument doc(512);
       auto error = deserializeJson(doc, payload);
       if (error) {
         Serial.print(F("deserializeJson() failed with code "));
         Serial.println(error.c_str());
         return;
       }
-      user_id = doc["user_id"].as<int>();
-      Serial.println("user_id");
-      Serial.println(user_id);
-    });
-    socket->emit("tp_getUsers", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
+      
+      for (int i = 0; i < playerSize; ++i) {
+        if(players[i][0] == "id"){
+          return "id".as<int>());
+        }
+      }
+      
+    }
 
-    socket->on("getUsers", [&](const char* payload, size_t len) {
-      Serial.println("GETUSERS");
+    socket->on("tp_getUsers", [&](const char* payload, size_t len) {
+      Serial.println("__GETUSERS__");
       Serial.println(payload);
       DynamicJsonDocument doc(512);
       auto error = deserializeJson(doc, payload);
@@ -84,47 +94,57 @@ public:
         playerPositions[playerSize][1] = 0;
         players[playerSize++] = playerId;
       }
-
-      for (int i = 0; i < playerSize; ++i) {
-        Serial.println(players[i]);
-      }
       });
-    socket->emit("getUsers", String("{ \"game\": \"ganzenbord\", \"id\": " + String(gameId) + " }").c_str());
+    socket->emit("tp_getUsers", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
 
-    socket->on("tp_state", [&](const char* payload, size_t len) {
+    socket->on("tp_getPlaats", [&](const char* payload, size_t len) {
       DynamicJsonDocument doc(512);
       auto error = deserializeJson(doc, payload);
       if (error) {
-        Serial.print(F("deserializeJson() failed with code "));
-        Serial.println(error.c_str());
         return;
       }
-
-      Serial.println("TP STATE!");
-      Serial.println(payload);
       for (int i = 0; i < playerSize; ++i) {
-        uint8_t pos = doc["playerPositions"][String(players[i])].as<uint8_t>();
-        Serial.println(playerPositions[i][0]);
-        Serial.println(players[i]);
-        Serial.println(pos);
-        Serial.println(playerPositions[i][1]);
-        if (playerPositions[i][0] == players[i]) {
-          playerPositions[i][1] = pos;
+        if(players[i][0] == "id"){
+          setStep(doc[players[i].as<int>(), doc["id"]["plek"].as<int>());
         }
       }
-
-      });
-    socket->emit("tp_state", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
-	}
-
-  void lopentwo(int player, uint8_t position) {
-    for (int i = 0; i < playerSize; ++i) {
-      if (playerPositions[i][0] == player) {
-        playerPositions[i][1] = position;
-      }
     }
-    renderPlayers();
-  }
+      
+      void setStep(int id, int plek) {
+        if (id == 0){
+          strip->setPixelColor(plek, 50, 0, 0);
+          strip->setPixelColor(old_1, 0, 0, 0);
+          
+          old_1 = plek;
+          strip->show();
+        }
+
+        else if (id == 1){
+          strip->setPixelColor(plek, 0, 50, 0);
+          strip->setPixelColor(old_2, 0, 0, 0);
+
+          old_2 = plek;
+          strip->show();
+        }
+
+
+        else if (id == 2){
+          strip->setPixelColor(plek, 0, 0, 50);
+          strip->setPixelColor(old_3, 0, 0, 0);
+
+          old_3 = plek;
+          strip->show();
+        }
+
+        else if (id == 3){
+          strip->setPixelColor(plek, 50, 50, 0);
+          strip->setPixelColor(old_4, 0, 0, 0);
+          
+          old_4 = plek;
+          strip->show();
+        }
+    });
+    socket->emit("tp_getPlaats", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
 
   void renderPlayers() {
     Serial.println("RENDERPLAYERS");
@@ -165,7 +185,10 @@ public:
   }
 
 	void loop() {
+  if(touchRead(TOUCH_PIN < 25)){
+    socket->emit("tp_turnCard", String("{ \"game\": \"trivialpursuit\", \"id\": " + String(gameId) + " }").c_str());
+  }
   strip->show();
-  delay(1000);
 	}
+}
 };
